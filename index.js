@@ -30,27 +30,27 @@ function lookForLabs() {
 		if (subject.type === "лабораторные занятия") {
 			let newSubject = JSON.parse(JSON.stringify(subject));
 
-			switch (newSubject.pairtime.start_time) {
+			switch (newSubject.start_time) {
 				case pairtimes.first.start_time:
-					newSubject.pairtime = pairtimes.second;
+					newSubject = { ...newSubject, ...pairtimes.second };
 					break;
 				case pairtimes.second.start_time:
-					newSubject.pairtime = pairtimes.third;
+					newSubject = { ...newSubject, ...pairtimes.third };
 					break;
 				case pairtimes.third.start_time:
-					newSubject.pairtime = pairtimes.fourth;
+					newSubject = { ...newSubject, ...pairtimes.fourth };
 					break;
 				case pairtimes.fourth.start_time:
-					newSubject.pairtime = pairtimes.fifth;
+					newSubject = { ...newSubject, ...pairtimes.fifth };
 					break;
 				case pairtimes.fifth.start_time:
-					newSubject.pairtime = pairtimes.sixth;
+					newSubject = { ...newSubject, ...pairtimes.sixth };
 					break;
 				case pairtimes.sixth.start_time:
-					newSubject.pairtime = pairtimes.seventh;
+					newSubject = { ...newSubject, ...pairtimes.seventh };
 					break;
 				case pairtimes.seventh.start_time:
-					newSubject.pairtime = pairtimes.eighth;
+					newSubject = { ...newSubject, ...pairtimes.eighth };
 					break;
 				default:
 					newSubject = null;
@@ -138,15 +138,17 @@ function parseSubject(text, x) {
 	//проверяем наличие аудитории
 	let beginIndex = type.index + type[0].length;
 	if (group !== "common") beginIndex = group.index + group[0].length;
-	const audLen = date.index - beginIndex;
-	audience = text.slice(beginIndex + 1, beginIndex + audLen - 2).trim();
+	audience = text
+		.slice(beginIndex, date.index)
+		.match(/\.(.*)\./)[1]
+		.trim();
 
 	return {
 		stgroup: stgroup,
 		subject: subject[0],
 		audience: audience,
-		dates: parseDate(date[1]),
-		pairtime: parseTime(x, type),
+		...parseDate(date[1]),
+		...parseTime(x, type),
 		group: group !== "common" ? group.groups.group : "common",
 		teacher,
 		type: type[0],
@@ -172,10 +174,10 @@ function parseDate(text) {
 		return { ...period.groups };
 	});
 	dates = dates.map((date) => {
-		return { ...date.groups };
+		return date.groups.date;
 	});
-
-	return { periods: periods, dates: dates };
+	// console.log(periods);
+	return { periods, dates };
 }
 
 const pairtimes = {
