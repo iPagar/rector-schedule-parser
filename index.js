@@ -137,7 +137,7 @@ function parseSubject(text, x) {
 
 	//проверяем наличие аудитории
 	let beginIndex = type.index + type[0].length;
-	if (group !== "common") beginIndex = group.index + group[0].length;
+	if (group !== "") beginIndex = group.index + group[0].length;
 	audience = text
 		.slice(beginIndex, date.index)
 		.match(/\.(.*)\./)[1]
@@ -149,7 +149,7 @@ function parseSubject(text, x) {
 		audience: audience,
 		...parseDate(date[1]),
 		...parseTime(x, type),
-		group: group !== "common" ? group.groups.group : "common",
+		group: group !== "" ? group.groups.group : "",
 		teacher,
 		type: type[0],
 	};
