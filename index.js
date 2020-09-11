@@ -125,7 +125,7 @@ function parseSubject(text, x) {
 	let group =
 		text.match(/\(.*([А-Я]).*\)/) !== null
 			? text.match(/\(.*(?<group>[А-Я]).*\)/)
-			: "common";
+			: "";
 	let teacher = "";
 	let type = text.match(/семинар|лекции|лабораторные занятия/);
 
