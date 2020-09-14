@@ -119,12 +119,12 @@ function getSubject() {
 }
 
 function parseSubject(text, x) {
-	let subject = text.match(/^[A-ZА-Я][a-zа-я ,-]*/);
+	let subject = text.match(/^[\dA-ZА-Я][A-ZА-Яa-zа-я ,-]*/);
 	let date = text.match(/\[(.*)\]$/);
 	let audience = "";
 	let group =
 		text.match(/\(.*([А-Я]).*\)/) !== null
-			? text.match(/\(.*(?<group>[А-Я]).*\)/)
+			? text.match(/\.*(?<group>\([ А-Я]*\))/)
 			: "";
 	let teacher = "";
 	let type = text.match(/семинар|лекции|лабораторные занятия/);
