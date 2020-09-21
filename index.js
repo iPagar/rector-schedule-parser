@@ -125,7 +125,7 @@ function parseSubject(text, x) {
 	let group =
 		text.match(/\(.*([А-Я]).*\)/) !== null
 			? text.match(/\.*(?<group>\([ А-Я]*\))/)
-			: "";
+			: "Без подгруппы";
 	let teacher = "";
 	let type = text.match(/семинар|лекции|лабораторные занятия/);
 
@@ -137,7 +137,7 @@ function parseSubject(text, x) {
 
 	//проверяем наличие аудитории
 	let beginIndex = type.index + type[0].length;
-	if (group !== "") beginIndex = group.index + group[0].length;
+	if (group !== "Без подгруппы") beginIndex = group.index + group[0].length;
 	audience = text
 		.slice(beginIndex, date.index)
 		.match(/\.(.*)\./)[1]
@@ -149,7 +149,10 @@ function parseSubject(text, x) {
 		audience: audience,
 		...parseDate(date[1]),
 		...parseTime(x, type),
-		group: group !== "" ? group.groups.group.replace(/\s+/g, "") : "",
+		group:
+			group !== "Без подгруппы"
+				? group.groups.group.replace(/\s+/g, "")
+				: "Без подгруппы",
 		teacher,
 		type: type[0],
 	};
