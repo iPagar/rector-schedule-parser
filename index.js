@@ -149,7 +149,7 @@ function parseSubject(text, x) {
 		audience: audience,
 		...parseDate(date[1]),
 		...parseTime(x, type),
-		group: group !== "" ? group.groups.group : "",
+		group: group !== "" ? group.groups.group.replace(/\s+/g, "") : "",
 		teacher,
 		type: type[0],
 	};
