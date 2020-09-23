@@ -29,7 +29,6 @@ function lookForLabs() {
 	subjects.forEach((subject) => {
 		if (subject.type === "лабораторные занятия") {
 			let newSubject = JSON.parse(JSON.stringify(subject));
-
 			switch (newSubject.start_time) {
 				case pairtimes.first.start_time:
 					newSubject = { ...newSubject, ...pairtimes.second };
@@ -56,8 +55,44 @@ function lookForLabs() {
 					newSubject = null;
 					break;
 			}
-
 			if (newSubject !== null) subjects.push(newSubject);
+		} else if (subject.subject === "Учебная практика") {
+			let newSubject = JSON.parse(JSON.stringify(subject));
+			let newSubjectSecond = JSON.parse(JSON.stringify(subject));
+			switch (newSubject.start_time) {
+				case pairtimes.first.start_time:
+					newSubject = { ...newSubject, ...pairtimes.second };
+					newSubjectSecond = { ...newSubject, ...pairtimes.third };
+					break;
+				case pairtimes.second.start_time:
+					newSubject = { ...newSubject, ...pairtimes.third };
+					newSubjectSecond = { ...newSubject, ...pairtimes.fourth };
+					break;
+				case pairtimes.third.start_time:
+					newSubject = { ...newSubject, ...pairtimes.fourth };
+					newSubjectSecond = { ...newSubject, ...pairtimes.fifth };
+					break;
+				case pairtimes.fourth.start_time:
+					newSubject = { ...newSubject, ...pairtimes.fifth };
+					newSubjectSecond = { ...newSubject, ...pairtimes.sixth };
+					break;
+				case pairtimes.fifth.start_time:
+					newSubject = { ...newSubject, ...pairtimes.sixth };
+					newSubjectSecond = { ...newSubject, ...pairtimes.seventh };
+					break;
+				case pairtimes.sixth.start_time:
+					newSubject = { ...newSubject, ...pairtimes.seventh };
+					newSubjectSecond = { ...newSubject, ...pairtimes.eighth };
+					break;
+				case pairtimes.seventh.start_time:
+					newSubject = { ...newSubject, ...pairtimes.eighth };
+					break;
+				default:
+					newSubject = null;
+					break;
+			}
+			if (newSubject !== null) subjects.push(newSubject);
+			if (newSubjectSecond !== null) subjects.push(newSubjectSecond);
 		}
 	});
 }
