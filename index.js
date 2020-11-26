@@ -154,7 +154,7 @@ function getSubject() {
 }
 
 function parseSubject(text, x) {
-	let subject = text.match(/^[\dA-ZА-Я][A-ZА-Яa-zа-яё :/(),-]*/);
+	let subject = text.match(/^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*/);
 	let date = text.match(/\[(.*)\]$/);
 	let audience = "";
 	let group =
