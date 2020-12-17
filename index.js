@@ -9,14 +9,18 @@ let stgroup = "";
 
 function parseSchedule(title) {
 	return new Promise((resolve, reject) => {
-		pdfExtract.extract(title, options, (err, data) => {
+		pdfExtract.extract(title, options, async (err, data) => {
 			if (err) return reject(err);
 
 			chunks = data.pages[0].content;
 
 			stgroup = getStgroup(chunks);
 			removeTime();
-			subjects = getSubjects();
+			try {
+				subjects = await getSubjects();
+			} catch (e) {
+				resolve([]);
+			}
 			lookForLabs();
 
 			resolve(subjects);
@@ -130,27 +134,31 @@ function removeTime() {
 }
 
 function getSubject() {
-	const lastSymb = "]";
-	let subject = "";
-	let index = 0;
+	try {
+		const lastSymb = "]";
+		let subject = "";
+		let index = 0;
 
-	const x = chunks[0].x;
-	for (
-		var i = 0;
-		i < chunks.length && !chunks[i].str.includes(lastSymb);
-		i++
-	) {
-		if (chunks[i].str.length) subject += " " + chunks[i].str.trim();
-		index = i;
+		const x = chunks[0].x;
+		for (
+			var i = 0;
+			i < chunks.length && !chunks[i].str.includes(lastSymb);
+			i++
+		) {
+			if (chunks[i].str.length) subject += " " + chunks[i].str.trim();
+			index = i;
+		}
+		subject = (subject + chunks[index + 1].str)
+			.replace(/\s{2,}/g, " ")
+			.replace(/\s[,]/g, ",")
+			.trim();
+		chunks.splice(0, index + 2);
+
+		//убираем проеблы с концов и двойные пробелы
+		return Promise.resolve(parseSubject(subject, x));
+	} catch (e) {
+		return Promise.reject(e);
 	}
-	subject = (subject + chunks[index + 1].str)
-		.replace(/\s{2,}/g, " ")
-		.replace(/\s[,]/g, ",")
-		.trim();
-	chunks.splice(0, index + 2);
-
-	//убираем проеблы с концов и двойные пробелы
-	return parseSubject(subject, x);
 }
 
 function parseSubject(text, x) {
@@ -270,10 +278,16 @@ function parseTime(x) {
 	return pairtime;
 }
 
-function getSubjects() {
+async function getSubjects() {
 	let subjects = [];
 	while (chunks.length) {
-		subjects.push(getSubject());
+		try {
+			const subject = await getSubject();
+
+			subjects.push(subject);
+		} catch (e) {
+			return Promise.reject(e);
+		}
 	}
 
 	return subjects;
