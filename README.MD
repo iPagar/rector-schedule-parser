@@ -14,13 +14,13 @@
     
 ##### Issues
 
-Предложения и замечания [здесь][issues]
+Предложения и замечания [здесь](issues)
 
 ##### Contributing
 
-Ты можешь внести вклад в соответствии с [CONTRIBUTING.md][CONTRIBUTING.md]
+Ты можешь внести вклад в соответствии с [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ##### License
 
-Испольуется [MIT License][LICENSE]
+Испольуется [MIT License](LICENSE)
 
