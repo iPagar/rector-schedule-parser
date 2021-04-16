@@ -14,7 +14,7 @@
     
 ##### Issues
 
-Предложения и замечания [здесь](issues)
+Предложения и замечания [здесь](https://github.com/iPagar/rector-schedule-parser/issues)
 
 ##### Contributing
 
