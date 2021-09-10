@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,5 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "pdf.js-extract": "^0.1.4"
+  },
+  "devDependencies": {
+    "jest": "^27.1.1"
   }
 }
