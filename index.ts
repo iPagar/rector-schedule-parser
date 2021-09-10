@@ -1,34 +1,23 @@
-import { PDFExtract } from "pdf.js-extract";
-const pdfExtract = new PDFExtract();
-const options = {};
+import { PDFExtract, PDFExtractOptions, PDFExtractText } from "pdf.js-extract";
+import fs from "fs";
+import path from "path";
 
-let chunks = "";
-let subjects = [];
-let stgroup = "";
+async function parse(title: string) {
+  const pdf = fs.readFileSync(path.join(__dirname, title));
+  const pdfExtract = new PDFExtract();
+  const options: PDFExtractOptions = { lastPage: 1 };
+  const pdfExtractedResult = await pdfExtract.extractBuffer(pdf, options);
+  const chunks = pdfExtractedResult.pages[0].content;
 
-function parse(title) {
-  return new Promise((resolve, reject) => {
-    pdfExtract.extract(title, options, async (err, data) => {
-      if (err) return reject(err);
-
-      chunks = data.pages[0].content;
-
-      stgroup = getStgroup(chunks);
-      removeTime();
-      try {
-        subjects = await getSubjects();
-      } catch (e) {
-        resolve([]);
-      }
-      lookForLabs();
-
-      resolve(subjects);
-    });
-  });
+  const stgroup = getStgroup(chunks);
+  removeTime(chunks);
+  const subjects = getSubjects(chunks, stgroup);
+  const subjectsWithLabs = lookForLabs(subjects);
+  return subjectsWithLabs;
 }
 
 // лаба - 2 пары подряд
-function lookForLabs() {
+function lookForLabs(subjects: any[]) {
   subjects.forEach((subject) => {
     if (subject.type === "лабораторные занятия") {
       let newSubject = JSON.parse(JSON.stringify(subject));
@@ -100,107 +89,104 @@ function lookForLabs() {
   });
 }
 
-function getStgroup() {
+function getStgroup(chunks: PDFExtractText[]) {
   const endSymbol = "8:";
-  let subject = "";
+  let stgroup = "";
   let index = 0;
 
-  for (
-    var i = 0;
-    i < chunks.length && !chunks[i].str.includes(endSymbol);
-    i++
-  ) {
-    subject += chunks[i].str;
+  if (chunks) {
+    for (
+      var i = 0;
+      i < chunks.length && !chunks[i].str.includes(endSymbol);
+      i++
+    ) {
+      stgroup += chunks[i].str;
 
-    index = i;
+      index = i;
+    }
+    chunks.splice(0, index + 1);
   }
-  chunks.splice(0, index + 1);
 
-  return subject;
+  return stgroup;
 }
 
 //избавляемся от времени начала и конца пар и названий дней недели
-function removeTime() {
+function removeTime(chunks: PDFExtractText[]) {
   const timeLength = 147;
   let removedLength = 0;
   let index = 0;
 
-  for (var i = 0; i < chunks.length && removedLength < timeLength; i++) {
-    removedLength += chunks[i].str.length;
-    index = i;
-  }
-  chunks.splice(0, index + 1);
-}
-
-function getSubject() {
-  try {
-    const lastSymb = "]";
-    let subject = "";
-    let index = 0;
-
-    const x = chunks[0].x;
-    for (
-      var i = 0;
-      i < chunks.length && !chunks[i].str.includes(lastSymb);
-      i++
-    ) {
-      if (chunks[i].str.length) subject += " " + chunks[i].str.trim();
+  if (chunks) {
+    for (var i = 0; i < chunks.length && removedLength < timeLength; i++) {
+      removedLength += chunks[i].str.length;
       index = i;
     }
-    subject = (subject + chunks[index + 1].str)
-      .replace(/\s{2,}/g, " ")
-      .replace(/\s[,]/g, ",")
-      .trim();
-    chunks.splice(0, index + 2);
-
-    //убираем проеблы с концов и двойные пробелы
-    return Promise.resolve(parseSubject(subject, x));
-  } catch (e) {
-    return Promise.reject(e);
+    chunks.splice(0, index + 1);
   }
 }
 
-function parseSubject(text, x) {
-  let subject = text.match(/^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*/);
-  let date = text.match(/\[(.*)\]$/);
-  let audience = "";
-  let group =
-    text.match(/\(.*([А-Я]).*\)/) !== null
-      ? text.match(/\.*(?<group>\([ А-Я]*\))/)
-      : "Без подгруппы";
-  let teacher = "";
-  let type = text.match(/семинар|лекции|лабораторные занятия/);
+function getSubject(chunks: PDFExtractText[], stgroup: string) {
+  const lastSymb = "]";
+  let subject = "";
+  let index = 0;
 
-  //проверяем наличие преподавателя
-  const endSubject = subject.index + subject[0].length;
-  const teacherLen = type.index - endSubject;
-  if (teacherLen > 4)
-    teacher = text.slice(endSubject + 1, endSubject + teacherLen).trim();
-
-  //проверяем наличие аудитории
-  let beginIndex = type.index + type[0].length;
-  if (group !== "Без подгруппы") beginIndex = group.index + group[0].length;
-  audience = text
-    .slice(beginIndex, date.index)
-    .match(/\.(.*)\./)[1]
+  const x = chunks[0].x;
+  for (var i = 0; i < chunks.length && !chunks[i].str.includes(lastSymb); i++) {
+    if (chunks[i].str.length) subject += " " + chunks[i].str.trim();
+    index = i;
+  }
+  subject = (subject + chunks[index + 1].str)
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s[,]/g, ",")
     .trim();
+  chunks.splice(0, index + 2);
 
-  return {
-    stgroup: stgroup,
-    subject: subject[0],
-    audience: audience,
-    ...parseDate(date[1]),
-    ...parseTime(x, type),
-    group:
-      group !== "Без подгруппы"
-        ? group.groups.group.replace(/\s+/g, "")
-        : "Без подгруппы",
-    teacher,
-    type: type[0],
-  };
+  //убираем проеблы с концов и двойные пробелы
+  return parseSubject(subject, x, stgroup);
 }
 
-function parseDate(text) {
+function parseSubject(text: string, x: number, stgroup: string) {
+  let subject = text.match(/(?<subject>^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*)/);
+  let date = text.match(/(?<date>\[(.*)\]$)/);
+  let audience;
+  let group = text.match(/\.*(?<group>\([ А-Я]*\))/) || "Без подгруппы";
+  let teacher = "";
+  let type = text.match(/(?<type>семинар|лекции|лабораторные занятия)/);
+  //проверяем наличие преподавателя
+  if (subject && type && type.index && group && date) {
+    const endSubject = subject[0].length;
+    const teacherLen = type.index - endSubject;
+    if (teacherLen > 4)
+      teacher = text.slice(endSubject + 1, endSubject + teacherLen).trim();
+
+    //проверяем наличие аудитории
+    let beginIndex = type.index + type[0].length;
+    if (group !== "Без подгруппы")
+      beginIndex =
+        typeof group !== "string" && group.index
+          ? group?.index + group[0].length
+          : beginIndex;
+    audience = text
+      .slice(beginIndex, date?.index)
+      .match(/\.(?<group>(.*))\./)
+      ?.groups?.group.trim();
+    return {
+      stgroup,
+      subject: subject[0],
+      audience: audience,
+      ...parseDate(date[1]),
+      ...parseTime(x),
+      group:
+        group !== "Без подгруппы"
+          ? typeof group === "string" && group.replace(/\s+/g, "")
+          : "Без подгруппы",
+      teacher,
+      type: type[0],
+    };
+  }
+}
+
+function parseDate(text: string) {
   //ищем периоды
   let periods = Array.from(
     text.matchAll(
@@ -213,14 +199,13 @@ function parseDate(text) {
     text.padStart(text.length + 1).matchAll(/[^-](?<date>\d{2}\.\d{2})(?!-)/g)
   );
   //удаляем лишнее
-  periods = periods.map((period) => {
+  const formattedPeriods = periods.map((period) => {
     return { ...period.groups };
   });
-  dates = dates.map((date) => {
-    return date.groups.date;
+  const formattedDates = dates.map((date) => {
+    return date?.groups?.date;
   });
-  // console.log(periods);
-  return { periods, dates };
+  return { periods: formattedPeriods, dates: formattedDates };
 }
 
 const pairtimes = {
@@ -242,7 +227,7 @@ const pairtimes = {
 // 420 - пятая
 // 514 - шестая
 // 607 - седьмая
-function parseTime(x) {
+function parseTime(x: number) {
   let pairtime = {};
 
   switch (Math.trunc(x)) {
@@ -275,16 +260,11 @@ function parseTime(x) {
   return pairtime;
 }
 
-async function getSubjects() {
+function getSubjects(chunks: PDFExtractText[], stgroup: string) {
   let subjects = [];
-  while (chunks.length) {
-    try {
-      const subject = await getSubject();
-
-      subjects.push(subject);
-    } catch (e) {
-      return Promise.reject(e);
-    }
+  while (chunks && chunks.length) {
+    const subject = getSubject(chunks, stgroup);
+    subjects.push(subject);
   }
 
   return subjects;

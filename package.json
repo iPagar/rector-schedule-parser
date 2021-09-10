@@ -2,18 +2,25 @@
   "name": "rector-schedule-parser",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "type": "module",
+  "main": "index.ts",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node index.ts",
+    "dev": "nodemon index.ts",
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pdf.js-extract": "^0.1.4"
+    "pdf-lib": "^1.16.0",
+    "pdf.js-extract": "^0.1.4",
+    "ts-node": "^10.2.1"
   },
   "devDependencies": {
-    "jest": "^27.1.1"
+    "@types/jest": "^27.0.1",
+    "@types/node": "^16.9.1",
+    "jest": "^27.1.1",
+    "nodemon": "^2.0.12",
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.2"
   }
 }
