@@ -1,23 +1,35 @@
 import { PDFExtract, PDFExtractOptions, PDFExtractText } from "pdf.js-extract";
-import fs from "fs";
-import path from "path";
+import fs from "fs/promises";
 
-async function parse(title: string) {
-  const pdf = fs.readFileSync(path.join(__dirname, title));
+async function parseBuffer(file: Buffer) {
   const pdfExtract = new PDFExtract();
   const options: PDFExtractOptions = { lastPage: 1 };
-  const pdfExtractedResult = await pdfExtract.extractBuffer(pdf, options);
+  const pdfExtractedResult = await pdfExtract.extractBuffer(file, options);
   const chunks = pdfExtractedResult.pages[0].content;
 
   const stgroup = getStgroup(chunks);
   removeTime(chunks);
   const subjects = getSubjects(chunks, stgroup);
-  const subjectsWithLabs = lookForLabs(subjects);
-  return subjectsWithLabs;
+  duplicateLabs(subjects);
+  return subjects;
+}
+
+async function parse(title: string) {
+  const file = await fs.readFile(new URL(title, import.meta.url));
+  const pdfExtract = new PDFExtract();
+  const options: PDFExtractOptions = { lastPage: 1 };
+  const pdfExtractedResult = await pdfExtract.extractBuffer(file, options);
+  const chunks = pdfExtractedResult.pages[0].content;
+
+  const stgroup = getStgroup(chunks);
+  removeTime(chunks);
+  const subjects = getSubjects(chunks, stgroup);
+  duplicateLabs(subjects);
+  return subjects;
 }
 
 // лаба - 2 пары подряд
-function lookForLabs(subjects: any[]) {
+function duplicateLabs(subjects: any[]) {
   subjects.forEach((subject) => {
     if (subject.type === "лабораторные занятия") {
       let newSubject = JSON.parse(JSON.stringify(subject));
@@ -270,4 +282,4 @@ function getSubjects(chunks: PDFExtractText[], stgroup: string) {
   return subjects;
 }
 
-export default parse;
+export { parse, parseBuffer };

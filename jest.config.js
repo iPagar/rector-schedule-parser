@@ -1,12 +1,8 @@
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
-module.exports = {
-  moduleFileExtensions: ["js", "json", "ts"],
-  rootDir: "src",
-  testRegex: ".*\\.test\\.ts$",
-  transform: {
-    "^.+\\.(t|j)s$": "ts-jest",
+export default {
+  preset: "ts-jest/presets/default-esm", // or other ESM presets
+  globals: {
+    "ts-jest": {
+      useESM: true,
+    },
   },
-  collectCoverageFrom: ["**/*.(t|j)s"],
-  coverageDirectory: "../coverage",
-  testEnvironment: "node",
 };
