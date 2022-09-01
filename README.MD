@@ -16,7 +16,7 @@
 
     ИЛИ
 
-    import { parseBuffer } from "rector-schedule-parserы";
+    import { parseBuffer } from "rector-schedule-parser";
 
     parser(pdfBuffer);
 
