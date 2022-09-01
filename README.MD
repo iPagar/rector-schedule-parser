@@ -6,7 +6,7 @@
 
 ##### Установка
 
-`npm i iPagar/rector-schedule-parser`
+`npm i rector-schedule-parser`
 
 ##### Использование
 
