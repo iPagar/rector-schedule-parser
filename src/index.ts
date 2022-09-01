@@ -1,5 +1,7 @@
 import { PDFExtract, PDFExtractOptions, PDFExtractText } from "pdf.js-extract";
 import fs from "fs/promises";
+import path from "path";
+const __dirname = path.resolve();
 
 async function parseBuffer(file: Buffer) {
   const pdfExtract = new PDFExtract();
@@ -15,7 +17,7 @@ async function parseBuffer(file: Buffer) {
 }
 
 async function parse(title: string) {
-  const file = await fs.readFile(new URL(title, import.meta.url));
+  const file = await fs.readFile(path.join(__dirname, title));
   const pdfExtract = new PDFExtract();
   const options: PDFExtractOptions = { lastPage: 1 };
   const pdfExtractedResult = await pdfExtract.extractBuffer(file, options);
