@@ -12,13 +12,13 @@
 
     import { parse } from "rector-schedule-parser";
 
-    parser("file.pdf");
+    parse("file.pdf");
 
     ИЛИ
 
     import { parseBuffer } from "rector-schedule-parser";
 
-    parser(pdfBuffer);
+    parseBuffer(pdfBuffer);
 
 ##### Issues
 
