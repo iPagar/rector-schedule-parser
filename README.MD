@@ -10,13 +10,13 @@
 
 ##### Использование
 
-    import { parse } from "../../index";
+    import { parse } from "rector-schedule-parser";
 
     parser("file.pdf");
 
     ИЛИ
 
-    import { parseBuffer } from "../../index";
+    import { parseBuffer } from "rector-schedule-parserы";
 
     parser(pdfBuffer);
 
