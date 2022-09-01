@@ -1,4 +1,4 @@
-import { parseBuffer } from "../../index";
+import { parseBuffer } from "../index";
 import fs from "fs/promises";
 
 describe("parse", () => {
