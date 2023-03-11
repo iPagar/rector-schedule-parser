@@ -1,10 +1,11 @@
-import { parseBuffer } from "../index";
 import fs from "fs/promises";
+import { parseBuffer } from "../..";
 
 describe("parse", () => {
   it("check 3 subjects in one box", async () => {
-    const title = "./mock/test1.pdf";
-    const file = await fs.readFile(new URL(title, import.meta.url));
+    const title = "src/__tests__/mock/test1.pdf";
+
+    const file = await fs.readFile(title);
 
     // expecting subjects
     const stgroup = "МДМ-21-11";
@@ -68,8 +69,8 @@ describe("parse", () => {
   });
 
   it("check 2 labs in one box", async () => {
-    const title = "./mock/test2.pdf";
-    const file = await fs.readFile(new URL(title, import.meta.url));
+    const title = "src/__tests__/mock/test2.pdf";
+    const file = await fs.readFile(title);
 
     // expecting subjects
     const stgroup = "МДС-18-02";
@@ -143,10 +144,61 @@ describe("parse", () => {
   });
 
   it("check subjects length in real pdf", async () => {
-    const title = "./mock/test3.pdf";
-    const file = await fs.readFile(new URL(title, import.meta.url));
+    const title = "src/__tests__/mock/test3.pdf";
+    const file = await fs.readFile(title);
 
     const subjects = await parseBuffer(file);
     expect(subjects.length).toEqual(56);
+  });
+
+  it("check exams and consultations", async () => {
+    const title = "src/__tests__/mock/test4.pdf";
+    const file = await fs.readFile(title);
+    const subjects = await parseBuffer(file);
+
+    // expecting subjects
+    const stgroup = "ИДБ-19-10";
+    const group = "Без подгруппы";
+    const expectingSubjects = [
+      {
+        stgroup,
+        subject: "Программная инженерия",
+        audience: "0801",
+        periods: [],
+        dates: ["15.05"],
+        start_time: "8:30",
+        end_time: "10:10",
+        group,
+        teacher: "Рыбаков А.В.",
+        type: "экзамен",
+      },
+      {
+        stgroup,
+        subject: "Программная инженерия",
+        audience: "0801",
+        periods: [],
+        dates: ["15.05"],
+        start_time: "10:20",
+        end_time: "12:00",
+        group,
+        teacher: "Рыбаков А.В.",
+        type: "экзамен",
+      },
+      {
+        stgroup,
+        subject: "Системы интеллектуального анализа данных",
+        audience: "0202",
+        periods: [],
+        dates: ["02.05"],
+        start_time: "14:10",
+        end_time: "15:50",
+        group,
+        teacher: "Логачёв М.С.",
+        type: "консультация",
+      },
+    ];
+
+    expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
+    expect(subjects.length).toEqual(3);
   });
 });
