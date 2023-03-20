@@ -201,4 +201,28 @@ describe("parse", () => {
     expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
     expect(subjects.length).toEqual(3);
   });
+
+  it('check physics labs in "A" group', async () => {
+    const title = "src/__tests__/mock/test5.pdf";
+    const file = await fs.readFile(title);
+    const subjects = await parseBuffer(file);
+
+    // expecting subjects
+    const expectingSubjects = [
+      {
+        audience: "408",
+        dates: [],
+        end_time: "14:00",
+        group: "(А)",
+        periods: [{ end_date: "04.04", repeat: "ч.н.", start_date: "21.02" }],
+        start_time: "12:20",
+        stgroup: "МДБ-22-02",
+        subject: "Физика",
+        teacher: "Штанько А.Е.",
+        type: "лабораторные занятия",
+      },
+    ];
+
+    expect(subjects[0]).toMatchObject(expectingSubjects[0]);
+  });
 });

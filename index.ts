@@ -261,7 +261,7 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
         group !== "Без подгруппы"
           ? typeof group === "string"
             ? group.replace(/\s+/g, "")
-            : group.toString()
+            : group[0]
           : "Без подгруппы",
       teacher,
       type: typedType,
