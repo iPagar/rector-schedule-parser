@@ -14,10 +14,6 @@ async function parseBuffer(file: Buffer) {
   return subjects;
 }
 
-parse("./src/__tests__/mock/МДБ-22-02.pdf").then((res) => {
-  // console.log(res);
-});
-
 async function parse(title: string) {
   try {
     const file = await fs.readFile(title);
@@ -260,6 +256,8 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
     }
     // make ( а) to (а)
     audience = audience.replace(/\(\s/g, "(");
+    // make (а ) to (а)
+    audience = audience.replace(/\s\)/g, ")");
 
     // make subject ( а) to (а)
     subject[0] = subject[0].replace(/\(\s/g, "(");
