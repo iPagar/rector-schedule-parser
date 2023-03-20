@@ -14,6 +14,10 @@ async function parseBuffer(file: Buffer) {
   return subjects;
 }
 
+parse("./src/__tests__/mock/МДБ-22-02.pdf").then((res) => {
+  // console.log(res);
+});
+
 async function parse(title: string) {
   try {
     const file = await fs.readFile(title);
@@ -205,7 +209,7 @@ export type SubjectType =
 function parseSubject(text: string, x: number, stgroup: string): Subject {
   let subject = text.match(/(?<subject>^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*)/);
   let date = text.match(/(?<date>\[(.*)\]$)/);
-  let audience;
+  let audience: string;
   let group = text.match(/\.*(?<group>\([ А-Я]*\))/) || "Без подгруппы";
   let teacher = "";
   const types: SubjectType[] = [
@@ -247,9 +251,20 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
           : beginIndex;
     audience =
       text
-        .slice(beginIndex, date?.index)
+        .slice(beginIndex, date.index)
         .match(/\.(?<group>(.*))\./)
         ?.groups?.group.trim() ?? "";
+    // исключения
+    if (audience.includes("ИГ -3")) {
+      audience = "ИГ-3";
+    }
+    // make ( а) to (а)
+    audience = audience.replace(/\(\s/g, "(");
+
+    // make subject ( а) to (а)
+    subject[0] = subject[0].replace(/\(\s/g, "(");
+    // make subject (а ) to (а)
+    subject[0] = subject[0].replace(/\s\)/g, ")");
 
     return {
       stgroup,
@@ -261,7 +276,7 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
         group !== "Без подгруппы"
           ? typeof group === "string"
             ? group.replace(/\s+/g, "")
-            : group[0]
+            : group[0].replace(/\s+/g, "")
           : "Без подгруппы",
       teacher,
       type: typedType,
