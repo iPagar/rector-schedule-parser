@@ -225,4 +225,57 @@ describe("parse", () => {
 
     expect(subjects[0]).toMatchObject(expectingSubjects[0]);
   });
+
+  it('checks "Фрезер (ММ)" location', async () => {
+    const title = "src/__tests__/mock/test6.pdf";
+    const file = await fs.readFile(title);
+    const subjects = await parseBuffer(file);
+
+    const expectingSubjects = [
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Технология конструкционных материалов",
+        audience: "Фрезер 303 (ММ)",
+        periods: [{ end_date: "23.11", repeat: "к.н.", start_date: "14.09" }],
+        dates: [],
+        start_time: "8:30",
+        end_time: "10:10",
+        group: "Без подгруппы",
+        teacher: "Федоров М.Ю.",
+        type: "лекции",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Технология конструкционных материалов",
+        audience: "Фрезер 303 (ММ)",
+        periods: [],
+        dates: ["07.09"],
+        start_time: "10:20",
+        end_time: "12:00",
+        group: "Без подгруппы",
+        teacher: "Федоров М.Ю.",
+        type: "лекции",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Информатика",
+        audience: "Фрезер 303 (ММ)",
+        periods: [
+          {
+            start_date: "14.09",
+            end_date: "30.11",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "10:20",
+        end_time: "12:00",
+        group: "Без подгруппы",
+        teacher: "Конюхова Г.П.",
+        type: "лекции",
+      },
+    ];
+
+    expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
+  });
 });

@@ -206,7 +206,8 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
   let subject = text.match(/(?<subject>^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*)/);
   let date = text.match(/(?<date>\[(.*)\]$)/);
   let audience: string;
-  let group = text.match(/\.*(?<group>\([ А-Я]*\))/) || "Без подгруппы";
+  // group can be (А) or ( А) or (А ) or ( А )
+  let group = text.match(/\.*(?<group>\([ А-Б]*\))/) || "Без подгруппы";
   let teacher = "";
   const types: SubjectType[] = [
     "семинар",
@@ -294,12 +295,20 @@ function parseDate(text: string): {
   periods: SubjectPeriod[];
   dates: string[];
 } {
-  //ищем периоды
+  // ищем периоды, for example [14.09-30.11к.н. ] or [07.09]
   let periods = Array.from(
     text.matchAll(
       /(?<start_date>\d{2}\.\d{2})[-](?<end_date>\d{2}\.\d{2}) (?<repeat>(?:[а-я]{1}[.]{1}){2})/g
     )
   );
+  if (!periods.length) {
+    // проверяем наличие периодов без пробела, for example [14.09-30.11к.н.]
+    periods = Array.from(
+      text.matchAll(
+        /(?<start_date>\d{2}\.\d{2})[-](?<end_date>\d{2}\.\d{2})(?<repeat>(?:[а-я]{1}[.]{1}){2})/g
+      )
+    );
+  }
 
   function isRepeat(x: string): x is "ч.н." | "к.н." {
     return x === "ч.н." || x === "к.н.";
