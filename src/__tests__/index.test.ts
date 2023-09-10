@@ -279,7 +279,7 @@ describe("parse", () => {
     expect(subjects.length).toEqual(3);
   });
 
-  it("test7", async () => {
+  it("checks for double seminars", async () => {
     const title = "src/__tests__/mock/test7.pdf";
     const file = await fs.readFile(title);
     const subjects = await parseBuffer(file);
