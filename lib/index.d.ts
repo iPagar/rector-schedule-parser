@@ -31,6 +31,8 @@ export declare type Subject = {
     stgroup: string;
     subject: string;
     audience: string;
+    start_time: string;
+    end_time: string;
 };
 export declare type SubjectType = "семинар" | "лекции" | "лабораторные занятия" | "экзамен" | "консультация";
 export declare type SubjectPeriod = {

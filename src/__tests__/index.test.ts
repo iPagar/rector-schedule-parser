@@ -64,8 +64,7 @@ describe("parse", () => {
     ];
 
     const subjects = await parseBuffer(file);
-    expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
-    expect(subjects.length).toEqual(3);
+    expect(subjects).toEqual(expectingSubjects);
   });
 
   it("check 2 labs in one box", async () => {
@@ -96,6 +95,18 @@ describe("parse", () => {
       },
       {
         stgroup,
+        subject: "Основы технологии машиностроения",
+        audience: "415",
+        periods: [],
+        dates: ["06.10", "20.10"],
+        start_time: "10:20",
+        end_time: "12:00",
+        group,
+        teacher: "Луцюк С.В.",
+        type: "лабораторные занятия",
+      },
+      {
+        stgroup,
         subject: "Методы и средства контроля качества изделий в машиностроении",
         audience: "415",
         periods: [
@@ -118,18 +129,6 @@ describe("parse", () => {
         audience: "415",
         periods: [],
         dates: ["06.10", "20.10"],
-        start_time: "10:20",
-        end_time: "12:00",
-        group,
-        teacher: "Луцюк С.В.",
-        type: "лабораторные занятия",
-      },
-      {
-        stgroup,
-        subject: "Основы технологии машиностроения",
-        audience: "415",
-        periods: [],
-        dates: ["06.10", "20.10"],
         start_time: "12:20",
         end_time: "14:00",
         group,
@@ -139,8 +138,8 @@ describe("parse", () => {
     ];
 
     const subjects = await parseBuffer(file);
-    expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
-    expect(subjects.length).toEqual(4);
+
+    expect(subjects).toEqual(expectingSubjects);
   });
 
   it("check subjects length in real pdf", async () => {
@@ -277,5 +276,126 @@ describe("parse", () => {
     ];
 
     expect(subjects).toEqual(expect.arrayContaining(expectingSubjects));
+    expect(subjects.length).toEqual(3);
+  });
+
+  it("test7", async () => {
+    const title = "src/__tests__/mock/test7.pdf";
+    const file = await fs.readFile(title);
+    const subjects = await parseBuffer(file);
+
+    const expectingSubjects = [
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Учебная практика",
+        audience: "Фрезер 215",
+        periods: [
+          {
+            start_date: "18.10",
+            end_date: "20.12",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "8:30",
+        end_time: "10:10",
+        group: "Без подгруппы",
+        teacher: "Федоров С.Ю.",
+        type: "семинар",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Учебная практика",
+        audience: "Фрезер 215",
+        periods: [
+          {
+            start_date: "13.09",
+            end_date: "20.12",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "10:20",
+        end_time: "12:00",
+        group: "Без подгруппы",
+        teacher: "Федоров С.Ю.",
+        type: "семинар",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Учебная практика",
+        audience: "Фрезер 215",
+        periods: [
+          {
+            start_date: "13.09",
+            end_date: "11.10",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "14:10",
+        end_time: "15:50",
+        group: "Без подгруппы",
+        teacher: "Федоров С.Ю.",
+        type: "семинар",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Основы российской государственности",
+        audience: "Фрезер 403",
+        periods: [
+          {
+            start_date: "08.11",
+            end_date: "29.11",
+            repeat: "к.н.",
+          },
+        ],
+        dates: ["18.10", "25.10"],
+        start_time: "14:10",
+        end_time: "15:50",
+        group: "Без подгруппы",
+        teacher: "Ливанова А.Н.",
+        type: "семинар",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Технология конструкционных материалов",
+        audience: "Фрезер 403",
+        periods: [
+          {
+            start_date: "20.09",
+            end_date: "11.10",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "16:00",
+        end_time: "17:40",
+        group: "Без подгруппы",
+        teacher: "Иванов Г.Н.",
+        type: "семинар",
+      },
+      {
+        stgroup: "МДБ-23-09",
+        subject: "Учебная практика",
+        audience: "Фрезер 215",
+        periods: [
+          {
+            start_date: "13.09",
+            end_date: "20.12",
+            repeat: "к.н.",
+          },
+        ],
+        dates: [],
+        start_time: "12:20",
+        end_time: "14:00",
+        group: "Без подгруппы",
+        teacher: "Федоров С.Ю.",
+        type: "семинар",
+      },
+    ];
+
+    expect(subjects.length).toEqual(expectingSubjects.length);
+    expect(subjects).toEqual(expectingSubjects);
   });
 });

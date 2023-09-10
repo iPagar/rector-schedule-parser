@@ -10,7 +10,7 @@ async function parseBuffer(file: Buffer) {
   const stgroup = getStgroup(chunks);
   removeTime(chunks);
   const subjects = getSubjects(chunks, stgroup);
-  duplicateLabs(subjects);
+  makeDoubleLabsAsSingle(subjects);
   return subjects;
 }
 
@@ -25,83 +25,56 @@ async function parse(title: string) {
     const stgroup = getStgroup(chunks);
     removeTime(chunks);
     const subjects = getSubjects(chunks, stgroup);
-    duplicateLabs(subjects);
+    makeDoubleLabsAsSingle(subjects);
     return subjects;
   } catch (e) {
     throw new Error(`Can't parse ${title}`);
   }
 }
 
-// лаба - 2 пары подряд
-function duplicateLabs(subjects: Subject[]) {
+function makeDoubleLabsAsSingle(subjects: Subject[]) {
   subjects.forEach((subject) => {
-    if (subject.type === "лабораторные занятия") {
-      let newSubject = JSON.parse(JSON.stringify(subject));
-      switch (newSubject.start_time) {
-        case pairtimes.first.start_time:
-          newSubject = { ...newSubject, ...pairtimes.second };
-          break;
-        case pairtimes.second.start_time:
-          newSubject = { ...newSubject, ...pairtimes.third };
-          break;
-        case pairtimes.third.start_time:
-          newSubject = { ...newSubject, ...pairtimes.fourth };
-          break;
-        case pairtimes.fourth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.fifth };
-          break;
-        case pairtimes.fifth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.sixth };
-          break;
-        case pairtimes.sixth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.seventh };
-          break;
-        case pairtimes.seventh.start_time:
-          newSubject = { ...newSubject, ...pairtimes.eighth };
-          break;
-        default:
-          newSubject = null;
-          break;
+    const foundPairTime = Object.values(pairtimes).find((pairtime) => {
+      return (
+        pairtime.start_time === subject.start_time &&
+        pairtime.end_time === subject.end_time
+      );
+    });
+
+    if (foundPairTime) {
+      return foundPairTime;
+    } else {
+      const foundStartTime = Object.values(pairtimes).find((pairtime) => {
+        return pairtime.start_time === subject.start_time;
+      });
+      const foundEndTime = Object.values(pairtimes).find((pairtime) => {
+        return pairtime.end_time === subject.end_time;
+      });
+
+      if (!foundEndTime) {
+        throw new Error(`Can't find end time ${subject.end_time}`);
       }
-      if (newSubject !== null) subjects.push(newSubject);
-    } else if (subject.subject === "Учебная практика") {
-      let newSubject = JSON.parse(JSON.stringify(subject));
-      let newSubjectSecond = JSON.parse(JSON.stringify(subject));
-      switch (newSubject.start_time) {
-        case pairtimes.first.start_time:
-          newSubject = { ...newSubject, ...pairtimes.second };
-          newSubjectSecond = { ...newSubject, ...pairtimes.third };
-          break;
-        case pairtimes.second.start_time:
-          newSubject = { ...newSubject, ...pairtimes.third };
-          newSubjectSecond = { ...newSubject, ...pairtimes.fourth };
-          break;
-        case pairtimes.third.start_time:
-          newSubject = { ...newSubject, ...pairtimes.fourth };
-          newSubjectSecond = { ...newSubject, ...pairtimes.fifth };
-          break;
-        case pairtimes.fourth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.fifth };
-          newSubjectSecond = { ...newSubject, ...pairtimes.sixth };
-          break;
-        case pairtimes.fifth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.sixth };
-          newSubjectSecond = { ...newSubject, ...pairtimes.seventh };
-          break;
-        case pairtimes.sixth.start_time:
-          newSubject = { ...newSubject, ...pairtimes.seventh };
-          newSubjectSecond = { ...newSubject, ...pairtimes.eighth };
-          break;
-        case pairtimes.seventh.start_time:
-          newSubject = { ...newSubject, ...pairtimes.eighth };
-          break;
-        default:
-          newSubject = null;
-          break;
+      if (!foundStartTime) {
+        throw new Error(`Can't find start time ${subject.start_time}`);
       }
-      if (newSubject !== null) subjects.push(newSubject);
-      if (newSubjectSecond !== null) subjects.push(newSubjectSecond);
+
+      subject.end_time = foundStartTime.end_time;
+
+      const newSubject: Subject = {
+        ...subject,
+        start_time: foundEndTime.start_time,
+        end_time: foundEndTime.end_time,
+      };
+
+      subjects.push(newSubject);
     }
+  });
+
+  // remove double labs
+  subjects = subjects.filter((subject) => {
+    const startTime = parseInt(subject.start_time.split(":")[0]);
+    const endTime = parseInt(subject.end_time.split(":")[0]);
+    return endTime - startTime !== 2;
   });
 }
 
@@ -171,14 +144,16 @@ export type Subject = {
   stgroup: string;
   subject: string;
   audience: string;
+  start_time: string;
+  end_time: string;
 };
 
 function getSubject(chunks: PDFExtractText[], stgroup: string): Subject {
   const lastSymb = "]";
   let subject = "";
   let index = 0;
-
   const x = chunks[0].x;
+
   for (var i = 0; i < chunks.length && !chunks[i].str.includes(lastSymb); i++) {
     if (chunks[i].str.length) subject += " " + chunks[i].str.trim();
     index = i;
@@ -189,10 +164,39 @@ function getSubject(chunks: PDFExtractText[], stgroup: string): Subject {
     .replace(/\s[,]/g, ",")
     .trim();
 
+  const chunkWithMaxX = chunks
+    .filter((_, i) => i <= index + 1)
+    .reduce((prev, current) => (prev.x > current.x ? prev : current));
+
+  let startTime = getStartTime(chunks[0].x);
+  let endTime = getEndTime(chunkWithMaxX.x);
+
+  const chunksStr = chunks
+    .filter((_, i) => i <= index + 1)
+    .map((x) => x.str)
+    .join("");
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      "\nSubject: " + subject,
+      "\nX1: " + x,
+      "\nX2: " + chunkWithMaxX.x,
+      "\nStart time: " + startTime,
+      "\nEnd Time:" + endTime,
+      "\nchunks: " + chunksStr
+    );
+  }
+
   chunks.splice(0, index + 2);
 
   //убираем проеблы с концов и двойные пробелы
-  return parseSubject(subject, x, stgroup);
+  return parseSubject({
+    text: subject,
+    x,
+    stgroup,
+    startTime,
+    endTime,
+  });
 }
 
 export type SubjectType =
@@ -202,7 +206,18 @@ export type SubjectType =
   | "экзамен"
   | "консультация";
 
-function parseSubject(text: string, x: number, stgroup: string): Subject {
+function parseSubject({
+  text,
+  stgroup,
+  startTime,
+  endTime,
+}: {
+  text: string;
+  x: number;
+  stgroup: string;
+  startTime: string;
+  endTime: string;
+}): Subject {
   let subject = text.match(/(?<subject>^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*)/);
   let date = text.match(/(?<date>\[(.*)\]$)/);
   let audience: string;
@@ -270,7 +285,8 @@ function parseSubject(text: string, x: number, stgroup: string): Subject {
       subject: subject[0],
       audience: audience,
       ...parseDate(date[1]),
-      ...parseTime(x),
+      start_time: startTime,
+      end_time: endTime,
       group:
         group !== "Без подгруппы"
           ? typeof group === "string"
@@ -370,8 +386,14 @@ const pairtimes = {
 // 420 - пятая
 // 514 - шестая
 // 607 - седьмая
-function parseTime(x: number) {
-  let pairtime = {};
+function parseTime(x: number): {
+  start_time: string;
+  end_time: string;
+} {
+  let pairtime: {
+    start_time: string;
+    end_time: string;
+  } | null;
 
   switch (Math.trunc(x)) {
     case 46:
@@ -398,6 +420,65 @@ function parseTime(x: number) {
     default:
       pairtime = pairtimes.eighth;
       break;
+  }
+
+  return pairtime;
+}
+
+function getStartTime(x: number): string {
+  let pairtime: string;
+
+  switch (Math.trunc(x)) {
+    case 46:
+      pairtime = pairtimes.first.start_time;
+      break;
+    case 139:
+      pairtime = pairtimes.second.start_time;
+      break;
+    case 233:
+      pairtime = pairtimes.third.start_time;
+      break;
+    case 327:
+      pairtime = pairtimes.fourth.start_time;
+      break;
+    case 420:
+      pairtime = pairtimes.fifth.start_time;
+      break;
+    case 514:
+      pairtime = pairtimes.sixth.start_time;
+      break;
+    case 607:
+      pairtime = pairtimes.seventh.start_time;
+      break;
+    default:
+      pairtime = pairtimes.eighth.start_time;
+      break;
+  }
+
+  return pairtime;
+}
+
+function getEndTime(x: number): string {
+  let pairtime: string;
+
+  if (x <= 46) {
+    throw new Error("Не удалось распарсить время");
+  } else if (x <= 139) {
+    pairtime = pairtimes.first.end_time;
+  } else if (x <= 233) {
+    pairtime = pairtimes.second.end_time;
+  } else if (x <= 327) {
+    pairtime = pairtimes.third.end_time;
+  } else if (x <= 420) {
+    pairtime = pairtimes.fourth.end_time;
+  } else if (x <= 514) {
+    pairtime = pairtimes.fifth.end_time;
+  } else if (x <= 607) {
+    pairtime = pairtimes.sixth.end_time;
+  } else if (x <= 700) {
+    pairtime = pairtimes.seventh.end_time;
+  } else {
+    pairtime = pairtimes.eighth.end_time;
   }
 
   return pairtime;
