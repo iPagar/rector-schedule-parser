@@ -19,12 +19,15 @@ describe("parse", () => {
         audience: "",
         periods: [
           {
-            end_date: "30.10",
+            end_date: "30.10" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
-            start_date: "11.09",
+            start_date: "11.09" + `.${new Date().getFullYear()}`,
           },
         ],
-        dates: ["13.11", "20.11"],
+        dates: [
+          "13.11" + `.${new Date().getFullYear()}`,
+          "20.11" + `.${new Date().getFullYear()}`,
+        ],
         start_time,
         end_time,
         group,
@@ -37,9 +40,9 @@ describe("parse", () => {
         audience: "",
         periods: [
           {
-            end_date: "18.12",
+            end_date: "18.12" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
-            start_date: "27.11",
+            start_date: "27.11" + `.${new Date().getFullYear()}`,
           },
         ],
         dates: [],
@@ -54,7 +57,7 @@ describe("parse", () => {
         subject: "Профессиональные научные коммуникации",
         audience: "",
         periods: [],
-        dates: ["25.12"],
+        dates: ["25.12" + `.${new Date().getFullYear()}`],
         start_time,
         end_time,
         group,
@@ -81,9 +84,9 @@ describe("parse", () => {
         audience: "415",
         periods: [
           {
-            end_date: "13.10",
+            end_date: "13.10" + `.${new Date().getFullYear()}`,
             repeat: "ч.н.",
-            start_date: "15.09",
+            start_date: "15.09" + `.${new Date().getFullYear()}`,
           },
         ],
         dates: [],
@@ -98,7 +101,10 @@ describe("parse", () => {
         subject: "Основы технологии машиностроения",
         audience: "415",
         periods: [],
-        dates: ["06.10", "20.10"],
+        dates: [
+          "06.10" + `.${new Date().getFullYear()}`,
+          "20.10" + `.${new Date().getFullYear()}`,
+        ],
         start_time: "10:20",
         end_time: "12:00",
         group,
@@ -111,9 +117,9 @@ describe("parse", () => {
         audience: "415",
         periods: [
           {
-            end_date: "13.10",
+            end_date: "13.10" + `.${new Date().getFullYear()}`,
             repeat: "ч.н.",
-            start_date: "15.09",
+            start_date: "15.09" + `.${new Date().getFullYear()}`,
           },
         ],
         dates: [],
@@ -128,7 +134,10 @@ describe("parse", () => {
         subject: "Основы технологии машиностроения",
         audience: "415",
         periods: [],
-        dates: ["06.10", "20.10"],
+        dates: [
+          "06.10" + `.${new Date().getFullYear()}`,
+          "20.10" + `.${new Date().getFullYear()}`,
+        ],
         start_time: "12:20",
         end_time: "14:00",
         group,
@@ -164,7 +173,7 @@ describe("parse", () => {
         subject: "Программная инженерия",
         audience: "0801",
         periods: [],
-        dates: ["15.05"],
+        dates: ["15.05" + `.${new Date().getFullYear()}`],
         start_time: "8:30",
         end_time: "10:10",
         group,
@@ -176,7 +185,7 @@ describe("parse", () => {
         subject: "Программная инженерия",
         audience: "0801",
         periods: [],
-        dates: ["15.05"],
+        dates: ["15.05" + `.${new Date().getFullYear()}`],
         start_time: "10:20",
         end_time: "12:00",
         group,
@@ -188,7 +197,7 @@ describe("parse", () => {
         subject: "Системы интеллектуального анализа данных",
         audience: "0202",
         periods: [],
-        dates: ["02.05"],
+        dates: ["02.05" + `.${new Date().getFullYear()}`],
         start_time: "14:10",
         end_time: "15:50",
         group,
@@ -213,7 +222,13 @@ describe("parse", () => {
         dates: [],
         end_time: "14:00",
         group: "(А)",
-        periods: [{ end_date: "04.04", repeat: "ч.н.", start_date: "21.02" }],
+        periods: [
+          {
+            end_date: "04.04" + `.${new Date().getFullYear()}`,
+            repeat: "ч.н.",
+            start_date: "21.02" + `.${new Date().getFullYear()}`,
+          },
+        ],
         start_time: "12:20",
         stgroup: "МДБ-22-02",
         subject: "Физика",
@@ -235,7 +250,13 @@ describe("parse", () => {
         stgroup: "МДБ-23-09",
         subject: "Технология конструкционных материалов",
         audience: "Фрезер 303 (ММ)",
-        periods: [{ end_date: "23.11", repeat: "к.н.", start_date: "14.09" }],
+        periods: [
+          {
+            end_date: "23.11" + `.${new Date().getFullYear()}`,
+            repeat: "к.н.",
+            start_date: "14.09" + `.${new Date().getFullYear()}`,
+          },
+        ],
         dates: [],
         start_time: "8:30",
         end_time: "10:10",
@@ -248,7 +269,7 @@ describe("parse", () => {
         subject: "Технология конструкционных материалов",
         audience: "Фрезер 303 (ММ)",
         periods: [],
-        dates: ["07.09"],
+        dates: ["07.09" + `.${new Date().getFullYear()}`],
         start_time: "10:20",
         end_time: "12:00",
         group: "Без подгруппы",
@@ -261,8 +282,8 @@ describe("parse", () => {
         audience: "Фрезер 303 (ММ)",
         periods: [
           {
-            start_date: "14.09",
-            end_date: "30.11",
+            start_date: "14.09" + `.${new Date().getFullYear()}`,
+            end_date: "30.11" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
@@ -291,8 +312,8 @@ describe("parse", () => {
         audience: "Фрезер 215",
         periods: [
           {
-            start_date: "18.10",
-            end_date: "20.12",
+            start_date: "18.10" + `.${new Date().getFullYear()}`,
+            end_date: "20.12" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
@@ -309,8 +330,8 @@ describe("parse", () => {
         audience: "Фрезер 215",
         periods: [
           {
-            start_date: "13.09",
-            end_date: "20.12",
+            start_date: "13.09" + `.${new Date().getFullYear()}`,
+            end_date: "20.12" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
@@ -327,8 +348,8 @@ describe("parse", () => {
         audience: "Фрезер 215",
         periods: [
           {
-            start_date: "13.09",
-            end_date: "11.10",
+            start_date: "13.09" + `.${new Date().getFullYear()}`,
+            end_date: "11.10" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
@@ -345,12 +366,15 @@ describe("parse", () => {
         audience: "Фрезер 403",
         periods: [
           {
-            start_date: "08.11",
-            end_date: "29.11",
+            start_date: "08.11" + `.${new Date().getFullYear()}`,
+            end_date: "29.11" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
-        dates: ["18.10", "25.10"],
+        dates: [
+          "18.10" + `.${new Date().getFullYear()}`,
+          "25.10" + `.${new Date().getFullYear()}`,
+        ],
         start_time: "14:10",
         end_time: "15:50",
         group: "Без подгруппы",
@@ -363,8 +387,8 @@ describe("parse", () => {
         audience: "Фрезер 403",
         periods: [
           {
-            start_date: "20.09",
-            end_date: "11.10",
+            start_date: "20.09" + `.${new Date().getFullYear()}`,
+            end_date: "11.10" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],
@@ -381,8 +405,8 @@ describe("parse", () => {
         audience: "Фрезер 215",
         periods: [
           {
-            start_date: "13.09",
-            end_date: "20.12",
+            start_date: "13.09" + `.${new Date().getFullYear()}`,
+            end_date: "20.12" + `.${new Date().getFullYear()}`,
             repeat: "к.н.",
           },
         ],

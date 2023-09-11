@@ -114,6 +114,27 @@ function removeTime(chunks: PDFExtractText[]) {
   }
 }
 
+export type SubjectType =
+  | "семинар"
+  | "лекции"
+  | "лабораторные занятия"
+  | "экзамен"
+  | "консультация";
+
+export type SubjectPeriod = {
+  /**
+   * @example
+   * 15.09.2021
+   */
+  start_date: string;
+  /**
+   * @example
+   * 13.10.2021
+   */
+  end_date: string;
+  repeat: "ч.н." | "к.н.";
+};
+
 /**
  * Получаем предметы
  * @returns
@@ -124,12 +145,12 @@ function removeTime(chunks: PDFExtractText[]) {
  *  type: 'лекции',
  *  periods: [
  *    {
- *          end_date: "13.10",
+ *          end_date: "13.10.2021",
  *          repeat: "ч.н.",
- *          start_date: "15.09",
+ *          start_date: "15.09.2021",
  *    }
  *  ],
- *  dates: [ '01.09.2021', '03.09.2021', '08.09.2021', '10.09.2021' ],
+ *  dates: [ '01.09.2021', '03.09.2021' ],
  *  stgroup: 'ИСиТ-21-1',
  *  subject: 'Информационные системы и технологии',
  *  audience: '0202'
@@ -140,11 +161,23 @@ export type Subject = {
   teacher: string;
   type: SubjectType;
   periods: SubjectPeriod[];
+  /**
+   * @example
+   * 01.09.2021
+   */
   dates: string[];
   stgroup: string;
   subject: string;
   audience: string;
+  /**
+   * @example
+   * 8:30
+   */
   start_time: string;
+  /**
+   * @example
+   * 10:10
+   */
   end_time: string;
 };
 
@@ -198,13 +231,6 @@ function getSubject(chunks: PDFExtractText[], stgroup: string): Subject {
     endTime,
   });
 }
-
-export type SubjectType =
-  | "семинар"
-  | "лекции"
-  | "лабораторные занятия"
-  | "экзамен"
-  | "консультация";
 
 function parseSubject({
   text,
@@ -301,12 +327,6 @@ function parseSubject({
   throw new Error(`Не удалось распознать предмет: ${text}`);
 }
 
-export type SubjectPeriod = {
-  start_date: string;
-  end_date: string;
-  repeat: "ч.н." | "к.н.";
-};
-
 function parseDate(text: string): {
   periods: SubjectPeriod[];
   dates: string[];
@@ -336,33 +356,54 @@ function parseDate(text: string): {
     text.padStart(text.length + 1).matchAll(/[^-](?<date>\d{2}\.\d{2})(?!-)/g)
   );
   //удаляем лишнее
-  const formattedPeriods = periods.map((period) => {
-    const start_date = period.groups?.start_date;
-    if (start_date === undefined)
-      throw new Error("Не удалось распарсить дату" + period.toString());
+  const formattedPeriods = periods
+    .map((period) => {
+      const start_date = period.groups?.start_date;
 
-    const end_date = period.groups?.end_date;
-    if (end_date === undefined)
-      throw new Error("Не удалось распарсить дату" + period.toString());
+      if (start_date === undefined)
+        throw new Error("Не удалось распарсить дату" + period.toString());
 
-    const repeat = period.groups?.repeat;
-    if (repeat === undefined)
-      throw new Error("Не удалось распарсить дату" + period.toString());
+      const end_date = period.groups?.end_date;
+      if (end_date === undefined)
+        throw new Error("Не удалось распарсить дату" + period.toString());
 
-    if (!isRepeat(repeat))
-      throw new Error("Не удалось распарсить дату" + period.toString());
+      const repeat = period.groups?.repeat;
+      if (repeat === undefined)
+        throw new Error("Не удалось распарсить дату" + period.toString());
 
-    return {
-      start_date,
-      end_date,
-      repeat,
-    };
-  });
-  const formattedDates = dates.map((date) => {
-    if (date.groups === undefined)
-      throw new Error("Не удалось распарсить дату" + date.toString());
-    return date.groups.date;
-  });
+      if (!isRepeat(repeat))
+        throw new Error("Не удалось распарсить дату" + period.toString());
+
+      return {
+        start_date,
+        end_date,
+        repeat,
+      };
+    })
+    .map((period) => {
+      // start_date: '13.09', end_date: '11.10' should be with year
+      const start_date = period.start_date;
+      const end_date = period.end_date;
+
+      const start_date_month = parseInt(start_date.split(".")[1]);
+      const end_date_month = parseInt(end_date.split(".")[1]);
+
+      return {
+        ...period,
+        start_date: `${period.start_date}.${new Date().getFullYear()}`,
+        end_date: `${period.end_date}.${new Date().getFullYear()}`,
+      };
+    });
+
+  const formattedDates = dates
+    .map((date) => {
+      if (date.groups === undefined)
+        throw new Error("Не удалось распарсить дату" + date.toString());
+      return date.groups.date;
+    })
+    .map((date) => {
+      return `${date}.${new Date().getFullYear()}`;
+    });
 
   return { periods: formattedPeriods, dates: formattedDates };
 }
