@@ -244,32 +244,45 @@ function parseSubject({
   startTime: string;
   endTime: string;
 }): Subject {
+  // Маппинг новых форматов типов занятий к стандартным
+  const typeMapping: Record<string, SubjectType> = {
+    // Стандартные форматы (оставляем как есть)
+    семинар: "семинар",
+    лекции: "лекции",
+    "лабораторные занятия": "лабораторные занятия",
+    экзамен: "экзамен",
+    консультация: "консультация",
+    // Новые форматы с заглавной буквы
+    лекция: "лекции",
+    семинары: "семинар",
+    лабораторные: "лабораторные занятия",
+    консультации: "консультация",
+    экзамены: "экзамен",
+  };
+
   let subject = text.match(/(?<subject>^[\dA-ZА-Я][A-ZА-Яa-zа-яё \d:/(),-]*)/);
   let date = text.match(/(?<date>\[(.*)\]$)/);
   let audience: string;
   // group can be (А) or ( А) or (А ) or ( А )
   let group = text.match(/\.*(?<group>\([ А-Б]*\))/) || "Без подгруппы";
   let teacher = "";
-  const types: SubjectType[] = [
-    "семинар",
-    "лекции",
-    "лабораторные занятия",
-    "экзамен",
-    "консультация",
-  ];
-  let type = text.match(`(?<type>${types.join("|")})`);
+
+  // Получаем все возможные варианты типов для поиска
+  const allTypeVariants = Object.keys(typeMapping);
+
+  // Создаём регулярное выражение с флагом i для регистронезависимого поиска
+  const typeRegex = new RegExp(`(${allTypeVariants.join("|")})`, "i");
+  let type = text.match(typeRegex);
 
   if (!type) {
     throw new Error(`Не удалось распознать тип занятия: ${text}`);
   }
 
-  function isTypeOfSubjectTypes(x: string): x is SubjectType {
-    return types.includes(x as SubjectType);
-  }
+  // Получаем нормализованный тип из маппинга
+  const foundType = type[0].toLowerCase();
+  const normalizedType = typeMapping[foundType];
 
-  const typedType = type[0];
-
-  if (!isTypeOfSubjectTypes(typedType)) {
+  if (!normalizedType) {
     throw new Error(`Не удалось распознать тип занятия: ${text}`);
   }
 
@@ -320,7 +333,7 @@ function parseSubject({
             : group[0].replace(/\s+/g, "")
           : "Без подгруппы",
       teacher,
-      type: typedType,
+      type: normalizedType,
     };
   }
 
