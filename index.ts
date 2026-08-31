@@ -1,40 +1,54 @@
 import { PDFExtract, PDFExtractOptions, PDFExtractText } from "pdf.js-extract";
 import { promises as fs } from "fs";
+import {
+  getEndTimeByX,
+  getStartTimeByX,
+  PairTimes,
+  resolvePairTimes,
+} from "./pair-times";
 
-async function parseBuffer(file: Buffer) {
+export type { PairTime, PairTimes } from "./pair-times";
+
+export type ParseOptions = {
+  pairTimes?: PairTimes;
+};
+
+async function parseBuffer(file: Buffer, parserOptions: ParseOptions = {}) {
   const pdfExtract = new PDFExtract();
-  const options: PDFExtractOptions = { lastPage: 1 };
-  const pdfExtractedResult = await pdfExtract.extractBuffer(file, options);
+  const pdfOptions: PDFExtractOptions = { lastPage: 1 };
+  const pdfExtractedResult = await pdfExtract.extractBuffer(file, pdfOptions);
   const chunks = pdfExtractedResult.pages[0].content;
+  const pairTimes = resolvePairTimes(parserOptions.pairTimes);
 
   const stgroup = getStgroup(chunks);
   removeTime(chunks);
-  const subjects = getSubjects(chunks, stgroup);
-  makeDoubleLabsAsSingle(subjects);
+  const subjects = getSubjects(chunks, stgroup, pairTimes);
+  makeDoubleLabsAsSingle(subjects, pairTimes);
   return subjects;
 }
 
-async function parse(title: string) {
+async function parse(title: string, parserOptions: ParseOptions = {}) {
   try {
     const file = await fs.readFile(title);
     const pdfExtract = new PDFExtract();
-    const options: PDFExtractOptions = { lastPage: 1 };
-    const pdfExtractedResult = await pdfExtract.extractBuffer(file, options);
+    const pdfOptions: PDFExtractOptions = { lastPage: 1 };
+    const pdfExtractedResult = await pdfExtract.extractBuffer(file, pdfOptions);
     const chunks = pdfExtractedResult.pages[0].content;
+    const pairTimes = resolvePairTimes(parserOptions.pairTimes);
 
     const stgroup = getStgroup(chunks);
     removeTime(chunks);
-    const subjects = getSubjects(chunks, stgroup);
-    makeDoubleLabsAsSingle(subjects);
+    const subjects = getSubjects(chunks, stgroup, pairTimes);
+    makeDoubleLabsAsSingle(subjects, pairTimes);
     return subjects;
   } catch (e) {
     throw new Error(`Can't parse ${title}`);
   }
 }
 
-function makeDoubleLabsAsSingle(subjects: Subject[]) {
+function makeDoubleLabsAsSingle(subjects: Subject[], pairTimes: PairTimes) {
   subjects.forEach((subject) => {
-    const foundPairTime = Object.values(pairtimes).find((pairtime) => {
+    const foundPairTime = pairTimes.find((pairtime) => {
       return (
         pairtime.start_time === subject.start_time &&
         pairtime.end_time === subject.end_time
@@ -44,10 +58,10 @@ function makeDoubleLabsAsSingle(subjects: Subject[]) {
     if (foundPairTime) {
       return foundPairTime;
     } else {
-      const foundStartTime = Object.values(pairtimes).find((pairtime) => {
+      const foundStartTime = pairTimes.find((pairtime) => {
         return pairtime.start_time === subject.start_time;
       });
-      const foundEndTime = Object.values(pairtimes).find((pairtime) => {
+      const foundEndTime = pairTimes.find((pairtime) => {
         return pairtime.end_time === subject.end_time;
       });
 
@@ -181,7 +195,11 @@ export type Subject = {
   end_time: string;
 };
 
-function getSubject(chunks: PDFExtractText[], stgroup: string): Subject {
+function getSubject(
+  chunks: PDFExtractText[],
+  stgroup: string,
+  pairTimes: PairTimes
+): Subject {
   const lastSymb = "]";
   let subject = "";
   let index = 0;
@@ -201,8 +219,8 @@ function getSubject(chunks: PDFExtractText[], stgroup: string): Subject {
     .filter((_, i) => i <= index + 1)
     .reduce((prev, current) => (prev.x > current.x ? prev : current));
 
-  let startTime = getStartTime(chunks[0].x);
-  let endTime = getEndTime(chunkWithMaxX.x);
+  let startTime = getStartTimeByX(chunks[0].x, pairTimes);
+  let endTime = getEndTimeByX(chunkWithMaxX.x, pairTimes);
 
   const chunksStr = chunks
     .filter((_, i) => i <= index + 1)
@@ -255,7 +273,9 @@ function parseSubject({
     // Новые форматы с заглавной буквы
     лекция: "лекции",
     семинары: "семинар",
+    лабораторная: "лабораторные занятия",
     лабораторные: "лабораторные занятия",
+    лаб: "лабораторные занятия",
     консультации: "консультация",
     экзамены: "экзамен",
   };
@@ -421,127 +441,14 @@ function parseDate(text: string): {
   return { periods: formattedPeriods, dates: formattedDates };
 }
 
-const pairtimes = {
-  first: { start_time: "8:30", end_time: "10:10" },
-  second: { start_time: "10:20", end_time: "12:00" },
-  third: { start_time: "12:20", end_time: "14:00" },
-  fourth: { start_time: "14:10", end_time: "15:50" },
-  fifth: { start_time: "16:00", end_time: "17:40" },
-  sixth: { start_time: "18:00", end_time: "19:30" },
-  seventh: { start_time: "19:40", end_time: "21:10" },
-  eighth: { start_time: "21:20", end_time: "22:50" },
-};
-
-// смотрим на время по координате начала названия предмета от левого края
-// 46 - первая пара
-// 139 - вторая
-// 233 - третья
-// 327 - четвертая
-// 420 - пятая
-// 514 - шестая
-// 607 - седьмая
-function parseTime(x: number): {
-  start_time: string;
-  end_time: string;
-} {
-  let pairtime: {
-    start_time: string;
-    end_time: string;
-  } | null;
-
-  switch (Math.trunc(x)) {
-    case 46:
-      pairtime = pairtimes.first;
-      break;
-    case 139:
-      pairtime = pairtimes.second;
-      break;
-    case 233:
-      pairtime = pairtimes.third;
-      break;
-    case 327:
-      pairtime = pairtimes.fourth;
-      break;
-    case 420:
-      pairtime = pairtimes.fifth;
-      break;
-    case 514:
-      pairtime = pairtimes.sixth;
-      break;
-    case 607:
-      pairtime = pairtimes.seventh;
-      break;
-    default:
-      pairtime = pairtimes.eighth;
-      break;
-  }
-
-  return pairtime;
-}
-
-function getStartTime(x: number): string {
-  let pairtime: string;
-
-  switch (Math.trunc(x)) {
-    case 46:
-      pairtime = pairtimes.first.start_time;
-      break;
-    case 139:
-      pairtime = pairtimes.second.start_time;
-      break;
-    case 233:
-      pairtime = pairtimes.third.start_time;
-      break;
-    case 327:
-      pairtime = pairtimes.fourth.start_time;
-      break;
-    case 420:
-      pairtime = pairtimes.fifth.start_time;
-      break;
-    case 514:
-      pairtime = pairtimes.sixth.start_time;
-      break;
-    case 607:
-      pairtime = pairtimes.seventh.start_time;
-      break;
-    default:
-      pairtime = pairtimes.eighth.start_time;
-      break;
-  }
-
-  return pairtime;
-}
-
-function getEndTime(x: number): string {
-  let pairtime: string;
-
-  if (x <= 46) {
-    throw new Error("Не удалось распарсить время");
-  } else if (x <= 139) {
-    pairtime = pairtimes.first.end_time;
-  } else if (x <= 233) {
-    pairtime = pairtimes.second.end_time;
-  } else if (x <= 327) {
-    pairtime = pairtimes.third.end_time;
-  } else if (x <= 420) {
-    pairtime = pairtimes.fourth.end_time;
-  } else if (x <= 514) {
-    pairtime = pairtimes.fifth.end_time;
-  } else if (x <= 607) {
-    pairtime = pairtimes.sixth.end_time;
-  } else if (x <= 700) {
-    pairtime = pairtimes.seventh.end_time;
-  } else {
-    pairtime = pairtimes.eighth.end_time;
-  }
-
-  return pairtime;
-}
-
-function getSubjects(chunks: PDFExtractText[], stgroup: string) {
+function getSubjects(
+  chunks: PDFExtractText[],
+  stgroup: string,
+  pairTimes: PairTimes
+) {
   let subjects = [];
   while (chunks && chunks.length) {
-    const subject = getSubject(chunks, stgroup);
+    const subject = getSubject(chunks, stgroup, pairTimes);
     subjects.push(subject);
   }
 

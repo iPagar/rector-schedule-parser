@@ -1,6 +1,11 @@
 /// <reference types="node" />
-declare function parseBuffer(file: Buffer): Promise<Subject[]>;
-declare function parse(title: string): Promise<Subject[]>;
+import { PairTimes } from "./pair-times";
+export type { PairTime, PairTimes } from "./pair-times";
+export declare type ParseOptions = {
+    pairTimes?: PairTimes;
+};
+declare function parseBuffer(file: Buffer, parserOptions?: ParseOptions): Promise<Subject[]>;
+declare function parse(title: string, parserOptions?: ParseOptions): Promise<Subject[]>;
 export declare type SubjectType = "семинар" | "лекции" | "лабораторные занятия" | "экзамен" | "консультация";
 export declare type SubjectPeriod = {
     /**

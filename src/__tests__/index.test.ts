@@ -1,7 +1,43 @@
 import fs from "fs/promises";
 import { parseBuffer } from "../..";
+import type { PairTimes } from "../..";
+
+const OLD_PAIR_TIMES: PairTimes = [
+  { start_time: "8:30", end_time: "10:10" },
+  { start_time: "10:20", end_time: "12:00" },
+  { start_time: "12:20", end_time: "14:00" },
+  { start_time: "14:10", end_time: "15:50" },
+  { start_time: "16:00", end_time: "17:40" },
+  { start_time: "18:00", end_time: "19:30" },
+  { start_time: "19:40", end_time: "21:10" },
+  { start_time: "21:20", end_time: "22:50" },
+];
 
 describe("parse", () => {
+  it("uses the current pair times by default", async () => {
+    const file = await fs.readFile(
+      "src/__tests__/mock/schedule-2026-autumn.pdf"
+    );
+
+    const subjects = await parseBuffer(file);
+    const parsedPairTimes = new Set(
+      subjects.map(
+        ({ start_time, end_time }) => `${start_time}-${end_time}`
+      )
+    );
+
+    expect(subjects).toHaveLength(26);
+    expect(parsedPairTimes).toEqual(
+      new Set([
+        "10:15-11:50",
+        "12:20-13:55",
+        "14:05-15:40",
+        "15:50-17:25",
+        "18:00-19:30",
+      ])
+    );
+  });
+
   it("check 3 subjects in one box", async () => {
     const title = "src/__tests__/mock/test1.pdf";
 
@@ -66,7 +102,7 @@ describe("parse", () => {
       },
     ];
 
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
     expect(subjects).toEqual(expectingSubjects);
   });
 
@@ -146,7 +182,7 @@ describe("parse", () => {
       },
     ];
 
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     expect(subjects).toEqual(expectingSubjects);
   });
@@ -155,14 +191,14 @@ describe("parse", () => {
     const title = "src/__tests__/mock/test3.pdf";
     const file = await fs.readFile(title);
 
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
     expect(subjects.length).toEqual(56);
   });
 
   it("check exams and consultations", async () => {
     const title = "src/__tests__/mock/test4.pdf";
     const file = await fs.readFile(title);
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     // expecting subjects
     const stgroup = "ИДБ-19-10";
@@ -213,7 +249,7 @@ describe("parse", () => {
   it('check physics labs in "A" group', async () => {
     const title = "src/__tests__/mock/test5.pdf";
     const file = await fs.readFile(title);
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     // expecting subjects
     const expectingSubjects = [
@@ -243,7 +279,7 @@ describe("parse", () => {
   it('checks "Фрезер (ММ)" location', async () => {
     const title = "src/__tests__/mock/test6.pdf";
     const file = await fs.readFile(title);
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     const expectingSubjects = [
       {
@@ -303,7 +339,7 @@ describe("parse", () => {
   it("checks for double seminars", async () => {
     const title = "src/__tests__/mock/test7.pdf";
     const file = await fs.readFile(title);
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     const expectingSubjects = [
       {
@@ -428,7 +464,7 @@ describe("parse", () => {
     const file = await fs.readFile(title);
 
     // Теперь парсер должен успешно обработать тип занятия "Лекция" с заглавной буквы
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     // Проверяем, что парсер успешно распознал предмет
     expect(subjects).toBeDefined();
@@ -450,7 +486,7 @@ describe("parse", () => {
     const title = "src/__tests__/mock/test9.pdf";
     const file = await fs.readFile(title);
 
-    const subjects = await parseBuffer(file);
+    const subjects = await parseBuffer(file, { pairTimes: OLD_PAIR_TIMES });
 
     // Проверяем общее количество предметов
     expect(subjects.length).toBe(55);
@@ -466,13 +502,13 @@ describe("parse", () => {
     if (techMarketing) {
       expect(techMarketing.periods).toHaveLength(2);
       expect(techMarketing.periods[0]).toMatchObject({
-        start_date: "09.09.2025",
-        end_date: "28.10.2025",
+        start_date: "09.09" + `.${new Date().getFullYear()}`,
+        end_date: "28.10" + `.${new Date().getFullYear()}`,
         repeat: "к.н.",
       });
       expect(techMarketing.periods[1]).toMatchObject({
-        start_date: "11.11.2025",
-        end_date: "02.12.2025",
+        start_date: "11.11" + `.${new Date().getFullYear()}`,
+        end_date: "02.12" + `.${new Date().getFullYear()}`,
         repeat: "к.н.",
       });
       expect(techMarketing.teacher).toBe("Кутин А.А.");
@@ -489,7 +525,10 @@ describe("parse", () => {
     );
     expect(automationA).toBeDefined();
     if (automationA) {
-      expect(automationA.dates).toEqual(["24.11.2025", "08.12.2025"]);
+      expect(automationA.dates).toEqual([
+        "24.11" + `.${new Date().getFullYear()}`,
+        "08.12" + `.${new Date().getFullYear()}`,
+      ]);
       expect(automationA.start_time).toBe("8:30");
       expect(automationA.end_time).toBe("10:10");
       expect(automationA.teacher).toBe("Луцюк С.В.");
@@ -505,7 +544,10 @@ describe("parse", () => {
     );
     expect(automationB).toBeDefined();
     if (automationB) {
-      expect(automationB.dates).toEqual(["01.12.2025", "15.12.2025"]);
+      expect(automationB.dates).toEqual([
+        "01.12" + `.${new Date().getFullYear()}`,
+        "15.12" + `.${new Date().getFullYear()}`,
+      ]);
     }
 
     // Проверяем предмет с особым форматом аудитории
@@ -531,8 +573,8 @@ describe("parse", () => {
     expect(techMachineSpecial).toBeDefined();
     if (techMachineSpecial) {
       expect(techMachineSpecial.periods[0]).toMatchObject({
-        start_date: "05.11.2025",
-        end_date: "17.12.2025",
+        start_date: "05.11" + `.${new Date().getFullYear()}`,
+        end_date: "17.12" + `.${new Date().getFullYear()}`,
         repeat: "ч.н.",
       });
     }
