@@ -36,6 +36,21 @@ describe("parse", () => {
         "18:00-19:30",
       ])
     );
+
+    expect(
+      subjects.find(
+        ({ subject, teacher }) =>
+          subject === "Экология" && teacher === "Мелехина Л.А."
+      )
+    ).toMatchObject({
+      stgroup: "АДБ-23-03",
+      subject: "Экология",
+      teacher: "Мелехина Л.А.",
+      audience: "0409",
+      start_time: "14:05",
+      end_time: "15:40",
+      type: "лекции",
+    });
   });
 
   it("check 3 subjects in one box", async () => {
